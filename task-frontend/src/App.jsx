@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Plus,
   Trash2,
@@ -9,44 +9,48 @@ import {
   ListTodo,
   Clock,
   LayoutGrid,
-} from 'lucide-react';
-import './App.css';
+} from "lucide-react";
+import "./App.css";
 
-const API_URL = 'http://localhost:8080/api/tasks';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const PRIORITY_CONFIG = {
-  LOW: { label: 'Low', className: 'badge-low' },
-  MEDIUM: { label: 'Medium', className: 'badge-medium' },
-  HIGH: { label: 'High', className: 'badge-high' },
+  LOW: { label: "Low", className: "badge-low" },
+  MEDIUM: { label: "Medium", className: "badge-medium" },
+  HIGH: { label: "High", className: "badge-high" },
 };
 
 const STATUS_CONFIG = {
-  TODO: { label: 'To Do' },
-  IN_PROGRESS: { label: 'In Progress' },
-  DONE: { label: 'Done' },
+  TODO: { label: "To Do" },
+  IN_PROGRESS: { label: "In Progress" },
+  DONE: { label: "Done" },
 };
 
 function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function isOverdue(dateStr, status) {
-  if (!dateStr || status === 'DONE') return false;
-  return new Date(dateStr + 'T00:00:00') < new Date();
+  if (!dateStr || status === "DONE") return false;
+  return new Date(dateStr + "T00:00:00") < new Date();
 }
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('ALL');
+  const [filter, setFilter] = useState("ALL");
   const [showForm, setShowForm] = useState(false);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('MEDIUM');
-  const [dueDate, setDueDate] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("MEDIUM");
+  const [dueDate, setDueDate] = useState("");
 
   useEffect(() => {
     fetchTasks();
@@ -54,11 +58,11 @@ function App() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(`${API_URL}/api/tasks`);
       const data = await res.json();
       setTasks(data);
     } catch (err) {
-      console.error('Failed to fetch tasks:', err);
+      console.error("Failed to fetch tasks:", err);
     } finally {
       setLoading(false);
     }
@@ -71,75 +75,83 @@ function App() {
     const newTask = {
       title,
       description,
-      status: 'TODO',
+      status: "TODO",
       priority,
       dueDate: dueDate || null,
     };
 
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(`${API_URL}/api/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTask),
       });
       const created = await res.json();
       setTasks([created, ...tasks]);
-      setTitle('');
-      setDescription('');
-      setPriority('MEDIUM');
-      setDueDate('');
+      setTitle("");
+      setDescription("");
+      setPriority("MEDIUM");
+      setDueDate("");
       setShowForm(false);
     } catch (err) {
-      console.error('Failed to add task:', err);
+      console.error("Failed to add task:", err);
     }
   };
 
   const handleStatusChange = async (task, newStatus) => {
     const updatedTask = { ...task, status: newStatus };
     try {
-      const res = await fetch(`${API_URL}/${task.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(`${API_URL}/api/tasks/${task.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedTask),
       });
       const updated = await res.json();
       setTasks(tasks.map((t) => (t.id === task.id ? updated : t)));
     } catch (err) {
-      console.error('Failed to update task:', err);
+      console.error("Failed to update task:", err);
     }
   };
 
   const toggleDone = (task) => {
-    handleStatusChange(task, task.status === 'DONE' ? 'TODO' : 'DONE');
+    handleStatusChange(task, task.status === "DONE" ? "TODO" : "DONE");
   };
-
   const handleDelete = async (id) => {
     try {
-      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/api/tasks/${id}`, {
+        method: "DELETE",
+      });
+
       setTasks(tasks.filter((t) => t.id !== id));
     } catch (err) {
-      console.error('Failed to delete task:', err);
+      console.error("Failed to delete task:", err);
     }
   };
 
   const counts = {
     ALL: tasks.length,
-    TODO: tasks.filter((t) => t.status === 'TODO').length,
-    IN_PROGRESS: tasks.filter((t) => t.status === 'IN_PROGRESS').length,
-    DONE: tasks.filter((t) => t.status === 'DONE').length,
+    TODO: tasks.filter((t) => t.status === "TODO").length,
+    IN_PROGRESS: tasks.filter((t) => t.status === "IN_PROGRESS").length,
+    DONE: tasks.filter((t) => t.status === "DONE").length,
   };
 
-  const filteredTasks = filter === 'ALL' ? tasks : tasks.filter((t) => t.status === filter);
+  const filteredTasks =
+    filter === "ALL" ? tasks : tasks.filter((t) => t.status === filter);
   const progressPct = counts.ALL === 0 ? 0 : (counts.DONE / counts.ALL) * 100;
 
   const TABS = [
-    { key: 'ALL', label: 'All', icon: <LayoutGrid size={14} /> },
-    { key: 'TODO', label: 'To Do', icon: <Circle size={14} /> },
-    { key: 'IN_PROGRESS', label: 'In Progress', icon: <Clock size={14} /> },
-    { key: 'DONE', label: 'Done', icon: <CheckCircle2 size={14} /> },
+    { key: "ALL", label: "All", icon: <LayoutGrid size={14} /> },
+    { key: "TODO", label: "To Do", icon: <Circle size={14} /> },
+    { key: "IN_PROGRESS", label: "In Progress", icon: <Clock size={14} /> },
+    { key: "DONE", label: "Done", icon: <CheckCircle2 size={14} /> },
   ];
 
-  if (loading) return <div className="page"><div className="container">Loading tasks...</div></div>;
+  if (loading)
+    return (
+      <div className="page">
+        <div className="container">Loading tasks...</div>
+      </div>
+    );
 
   return (
     <div className="page">
@@ -152,10 +164,15 @@ function App() {
             <span className="workspace-label">Workspace</span>
           </div>
           <h1>My Tasks</h1>
-          <p className="subtitle">{counts.DONE} of {counts.ALL} tasks completed</p>
+          <p className="subtitle">
+            {counts.DONE} of {counts.ALL} tasks completed
+          </p>
 
           <div className="progress-track">
-            <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+            <div
+              className="progress-fill"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
         </div>
 
@@ -171,7 +188,7 @@ function App() {
               placeholder="Task title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddTask(e)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddTask(e)}
               autoFocus
             />
             <textarea
@@ -182,7 +199,10 @@ function App() {
             />
             <div className="form-row">
               <div className="select-wrap">
-                <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
                   <option value="LOW">Low priority</option>
                   <option value="MEDIUM">Medium priority</option>
                   <option value="HIGH">High priority</option>
@@ -196,8 +216,12 @@ function App() {
               />
             </div>
             <div className="form-actions">
-              <button className="submit-btn" onClick={handleAddTask}>Add Task</button>
-              <button className="cancel-btn" onClick={() => setShowForm(false)}>Cancel</button>
+              <button className="submit-btn" onClick={handleAddTask}>
+                Add Task
+              </button>
+              <button className="cancel-btn" onClick={() => setShowForm(false)}>
+                Cancel
+              </button>
             </div>
           </div>
         )}
@@ -206,7 +230,7 @@ function App() {
           {TABS.map((tab) => (
             <button
               key={tab.key}
-              className={`tab ${filter === tab.key ? 'active' : ''}`}
+              className={`tab ${filter === tab.key ? "active" : ""}`}
               onClick={() => setFilter(tab.key)}
             >
               {tab.icon}
@@ -227,9 +251,12 @@ function App() {
             const p = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.MEDIUM;
             const overdue = isOverdue(task.dueDate, task.status);
             return (
-              <div key={task.id} className={`task-card ${task.status === 'DONE' ? 'is-done' : ''}`}>
+              <div
+                key={task.id}
+                className={`task-card ${task.status === "DONE" ? "is-done" : ""}`}
+              >
                 <button className="check-btn" onClick={() => toggleDone(task)}>
-                  {task.status === 'DONE' ? (
+                  {task.status === "DONE" ? (
                     <CheckCircle2 size={18} className="check-done" />
                   ) : (
                     <Circle size={18} className="check-empty" />
@@ -238,14 +265,21 @@ function App() {
 
                 <div className="task-body">
                   <div className="task-title-row">
-                    <h3 className={task.status === 'DONE' ? 'done-text' : ''}>{task.title}</h3>
-                    <button className="delete-btn" onClick={() => handleDelete(task.id)}>
+                    <h3 className={task.status === "DONE" ? "done-text" : ""}>
+                      {task.title}
+                    </h3>
+                    <button
+                      className="delete-btn"
+                      onClick={() => handleDelete(task.id)}
+                    >
                       <Trash2 size={13} />
                     </button>
                   </div>
 
                   {task.description && (
-                    <p className={task.status === 'DONE' ? 'done-text' : ''}>{task.description}</p>
+                    <p className={task.status === "DONE" ? "done-text" : ""}>
+                      {task.description}
+                    </p>
                   )}
 
                   <div className="task-meta">
@@ -254,9 +288,10 @@ function App() {
                     </span>
 
                     {task.dueDate && (
-                      <span className={`due-date ${overdue ? 'overdue' : ''}`}>
+                      <span className={`due-date ${overdue ? "overdue" : ""}`}>
                         <Calendar size={11} />
-                        {overdue ? 'Overdue · ' : ''}{formatDate(task.dueDate)}
+                        {overdue ? "Overdue · " : ""}
+                        {formatDate(task.dueDate)}
                       </span>
                     )}
 
@@ -264,7 +299,9 @@ function App() {
                       <select
                         className={`status-select status-${task.status?.toLowerCase()}`}
                         value={task.status}
-                        onChange={(e) => handleStatusChange(task, e.target.value)}
+                        onChange={(e) =>
+                          handleStatusChange(task, e.target.value)
+                        }
                       >
                         <option value="TODO">To Do</option>
                         <option value="IN_PROGRESS">In Progress</option>
